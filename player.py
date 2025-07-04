@@ -1,78 +1,77 @@
 import os
-import threading
 import cv2
 import pygame
 
 HD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "HD")
 
 
-def play_audio_loop(name: str) -> pygame.mixer.Sound:
-    """Load a wav file from HD and play it looping."""
-    audio_path = os.path.join(HD_DIR, f"{name}.wav")
-    if not os.path.exists(audio_path):
-        raise FileNotFoundError(audio_path)
-
-    pygame.mixer.init()
-    sound = pygame.mixer.Sound(audio_path)
-    sound.play(loops=-1)
-    return sound
+def list_clips():
+    """Return base names that have BOTH .mov and .wav."""
+    bases = {os.path.splitext(f)[0] for f in os.listdir(HD_DIR)}
+    return sorted([
+        b for b in bases
+        if os.path.exists(os.path.join(HD_DIR, f"{b}.mov"))
+        and os.path.exists(os.path.join(HD_DIR, f"{b}.wav"))
+    ])
 
 
-def play_video(name: str, stop_event: threading.Event) -> None:
-    """Continuously play a video file from HD until stop_event is set."""
-    video_path = os.path.join(HD_DIR, f"{name}.mov")
-    if not os.path.exists(video_path):
-        raise FileNotFoundError(video_path)
+def add_looping_audio(name, volume=1.0):
+    """Load <name>.wav, play forever, keep refs so it never stops."""
+    path = os.path.join(HD_DIR, f"{name}.wav")
+    snd = pygame.mixer.Sound(path)
+    snd.set_volume(volume)               # 0.0 → 1.0
+    chan = snd.play(loops=-1, fade_ms=250)
+    return snd, chan                     # keep both refs!
 
-    while not stop_event.is_set():
-        cap = cv2.VideoCapture(video_path)
-        if not cap.isOpened():
-            print(f"Failed to open {video_path}")
+
+def video_player(path):
+    cap = cv2.VideoCapture(path)
+    if not cap.isOpened():
+        print(f"Couldn't open {path}"); return "next"
+    while True:
+        ok, frame = cap.read()
+        if not ok:                       # loop video endlessly
+            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            continue
+        cv2.imshow("Video", frame)
+        k = cv2.waitKey(30) & 0xFF
+        if k == ord('q'):
+            return "quit"
+        if k != 0xFF:                    # any other key ⇒ next clip
+            return "next"
+
+
+def main():
+    clips = list_clips()
+    if not clips:
+        print("No matching .mov/.wav pairs in HD/"); return
+
+    # --- robust mixer initialisation ---------------------------
+    pygame.mixer.pre_init(44100, -16, 2, 512)   # 44.1 kHz, 16-bit, stereo
+    pygame.init()
+    pygame.mixer.set_num_channels(32)           # plenty of mixing room
+    # -----------------------------------------------------------
+
+    playing_refs = []            # keep Sounds & Channels alive
+    idx = 0
+
+    while True:
+        clip = clips[idx]
+        print(f"\n▶ {clip}  (any key → next, q → quit)")
+
+        # start/stack the new loop
+        playing_refs.append(add_looping_audio(clip))
+
+        # show video (runs in the MAIN thread!)
+        status = video_player(os.path.join(HD_DIR, f"{clip}.mov"))
+        cv2.destroyAllWindows()
+
+        if status == "quit":
             break
-        while cap.isOpened() and not stop_event.is_set():
-            ret, frame = cap.read()
-            if not ret:
-                break
-            cv2.imshow("Video", frame)
-            if cv2.waitKey(30) & 0xFF == ord("q"):
-                stop_event.set()
-                break
-        cap.release()
-    cv2.destroyAllWindows()
+        idx = (idx + 1) % len(clips)
 
-
-def main() -> None:
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Loop audio and video clips from the HD folder.")
-    parser.add_argument(
-        "clip",
-        help="Base name (without extension) of the clip to start playing",
-    )
-    args = parser.parse_args()
-
-    play_audio_loop(args.clip)
-
-    stop_event = threading.Event()
-    video_thread = threading.Thread(target=play_video, args=(args.clip, stop_event))
-    video_thread.start()
-
-    try:
-        while True:
-            new_video = input("Enter new video name or 'q' to quit: ").strip()
-            if new_video.lower() == "q":
-                break
-            if not new_video:
-                continue
-            stop_event.set()
-            video_thread.join()
-            stop_event.clear()
-            video_thread = threading.Thread(target=play_video, args=(new_video, stop_event))
-            video_thread.start()
-    finally:
-        stop_event.set()
-        video_thread.join()
-        pygame.mixer.quit()
+    pygame.mixer.fadeout(1000)    # gentle exit
+    pygame.mixer.quit()
 
 
 if __name__ == "__main__":
