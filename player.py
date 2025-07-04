@@ -9,13 +9,35 @@ HD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "HD")
 
 
 def list_clips():
-    """Return base names that have BOTH .mov and .wav."""
-    bases = {os.path.splitext(f)[0] for f in os.listdir(HD_DIR)}
-    return sorted([
-        b for b in bases
-        if os.path.exists(os.path.join(HD_DIR, f"{b}.mov"))
-        and os.path.exists(os.path.join(HD_DIR, f"{b}.wav"))
-    ])
+    """
+    Return every video *base* that             ─────┐
+    has at least one WAV beginning with it.  <──────┘
+    Audio files may carry suffix flags (e.g. _v3, _dp…).
+    """
+    files = os.listdir(HD_DIR)
+
+    # collect all .mov basenames first
+    video_bases = {
+        os.path.splitext(f)[0]
+        for f in files
+        if f.lower().endswith(".mov")
+    }
+
+    # now keep only those that have ≥1 matching wav (base or base_*)
+    good = []
+    wav_set = [f for f in files if f.lower().endswith(".wav")]
+
+    for base in video_bases:
+        prefix  = f"{base}_"         # base followed by an underscore
+        has_wav = any(
+            w == f"{base}.wav" or w.startswith(prefix)
+            for w in wav_set
+        )
+        if has_wav:
+            good.append(base)
+
+    return sorted(good)
+
 
 
 def video_player(path):
