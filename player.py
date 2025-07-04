@@ -1,6 +1,9 @@
 import os
 import cv2
 import pygame
+import time
+
+from clip_utils import start_clip, update_clips, active_clips, master_gain
 
 HD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "HD")
 
@@ -15,15 +18,6 @@ def list_clips():
     ])
 
 
-def add_looping_audio(name, volume=1.0):
-    """Load <name>.wav, play forever, keep refs so it never stops."""
-    path = os.path.join(HD_DIR, f"{name}.wav")
-    snd = pygame.mixer.Sound(path)
-    snd.set_volume(volume)               # 0.0 → 1.0
-    chan = snd.play(loops=-1, fade_ms=250)
-    return snd, chan                     # keep both refs!
-
-
 def video_player(path):
     cap = cv2.VideoCapture(path)
     if not cap.isOpened():
@@ -35,6 +29,7 @@ def video_player(path):
             continue
         cv2.imshow("Video", frame)
         k = cv2.waitKey(24) & 0xFF
+        update_clips(0.024)
         if k == ord('q'):
             return "quit"
         if k != 0xFF:                    # any other key ⇒ next clip
@@ -52,15 +47,14 @@ def main():
     pygame.mixer.set_num_channels(32)           # plenty of mixing room
     # -----------------------------------------------------------
 
-    playing_refs = []            # keep Sounds & Channels alive
     idx = 0
 
     while True:
         clip = clips[idx]
         print(f"\n▶ {clip}  (any key → next, q → quit)")
 
-        # start/stack the new loop
-        playing_refs.append(add_looping_audio(clip))
+        # start/stack the new loop with flag handling
+        start_clip(clip, HD_DIR)
 
         # show video (runs in the MAIN thread!)
         status = video_player(os.path.join(HD_DIR, f"{clip}.mov"))
