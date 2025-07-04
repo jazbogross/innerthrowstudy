@@ -34,7 +34,7 @@ def video_player(path):
             cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
             continue
         cv2.imshow("Video", frame)
-        k = cv2.waitKey(30) & 0xFF
+        k = cv2.waitKey(24) & 0xFF
         if k == ord('q'):
             return "quit"
         if k != 0xFF:                    # any other key ⇒ next clip
