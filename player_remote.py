@@ -50,6 +50,7 @@ def video_player(path: str) -> str:
         "--no-osd-bar",
         "--hwdec=auto",
         "--no-config",
+        "--loop=inf",
         "--no-audio",
         path
     ]
