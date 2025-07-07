@@ -18,7 +18,7 @@ POLL   = 0.20  # seconds between polls / audio updates
 
 def list_clips() -> list[str]:
     files = os.listdir(HD_DIR)
-    vids  = {os.path.splitext(f)[0] for f in files if f.lower().endswith(".mov")}
+    vids  = {os.path.splitext(f)[0] for f in files if f.lower().endswith(".mmp4")}
     wavs  = {os.path.splitext(f)[0] for f in files if f.lower().endswith(".wav")}
     return sorted(b for b in vids if any(w == b or w.startswith(f"{b}_") for w in wavs))
 
@@ -96,7 +96,7 @@ def main():
         print(f"▶ {clip}")
         start_clip(clip, HD_DIR)
 
-        status = video_player(os.path.join(HD_DIR, f"{clip}.mov"))
+        status = video_player(os.path.join(HD_DIR, f"{clip}.mmp4"))
         if status == "quit":
             break
 

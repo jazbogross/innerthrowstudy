@@ -55,7 +55,7 @@ def launch_player():
     player = os.path.join(here, "player_remote.py")
     # Pass the server URL via env var in case you ever change port/host
     env = os.environ.copy()
-    env["LOOPER_SERVER"] = "http://127.0.0.1:5000/command"
+    env["LOOPER_SERVER"] = "http://127.0.0.1:5003/command"
     return subprocess.Popen([sys.executable, player], env=env)
 
 # --------------------------------------------------------------------
@@ -63,7 +63,7 @@ if __name__ == "__main__":
     player_proc = launch_player()
     try:
         # 0.0.0.0 so that phones on the same Wi-Fi can reach it
-        app.run(host="0.0.0.0", port=5000, debug=False)
+        app.run(host="0.0.0.0", port=5003, debug=False)
     finally:
         # tidy shutdown on Ctrl-C or Quit button
         player_proc.terminate()
