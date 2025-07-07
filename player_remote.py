@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 # Remote-driven video looper that polls /command on localhost
 
-import os, time, requests, pygame, subprocess
+import os
+import time
+import requests
+import pygame
+import subprocess
+
 from clip_utils import start_clip, update_clips
 
 HD_DIR = os.path.join(os.path.dirname(__file__), "HD")
 SERVER = os.getenv("LOOPER_SERVER", "http://127.0.0.1:5000/command")
-POLL   = 0.20        # seconds between polls / frames
+POLL   = 0.20  # seconds between polls / frames
 
 def list_clips():
     files = os.listdir(HD_DIR)
@@ -44,14 +49,15 @@ def video_player(path):
     proc.wait()
     return "next"
 
-
 def main():
     clips = list_clips()
     if not clips:
         print("No media in HD/"); return
 
+    # initialize mixer for layered audio
     pygame.mixer.pre_init(44100, -16, 2, 512)
-    pygame.init(); pygame.mixer.set_num_channels(32)
+    pygame.init()
+    pygame.mixer.set_num_channels(32)
 
     if not wait_for_start():
         return
@@ -63,13 +69,13 @@ def main():
         start_clip(clip, HD_DIR)
 
         status = video_player(os.path.join(HD_DIR, f"{clip}.mov"))
-        cv2.destroyAllWindows()
 
         if status == "quit":
             break
         idx = (idx + 1) % len(clips)
 
-    pygame.mixer.fadeout(1000); pygame.mixer.quit()
+    pygame.mixer.fadeout(1000)
+    pygame.mixer.quit()
 
 if __name__ == "__main__":
     main()
