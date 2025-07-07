@@ -1,8 +1,22 @@
-#!/bin/bash
-# Create and activate Python virtual environment
+#!/usr/bin/env bash
+#
+# load_venv.sh  – set up venv (once) and launch remote_server.py
+# put this in /home/mpi/innerthrowstudy/  and  chmod +x load_venv.sh
 
-if [ ! -d ".venv" ]; then
+set -e                          # bail on first error
+
+# ── 1. always run from the script’s own folder ─────────────────────
+cd "$(dirname "$(readlink -f "$0")")"
+
+# ── 2. bootstrap the virtual environment (once) ────────────────────
+if [[ ! -d ".venv" ]]; then
     python3 -m venv .venv
 fi
+
+# make sure we’re using the venv’s interpreter + pip
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install --upgrade pip   # safe to run repeatedly
+python -m pip install -r requirements.txt
+
+# ── 3. exec the real application  (so systemd sees its PID) ────────
+exec python remote_server.py          # remote_server will spawn player_remote
