@@ -20,6 +20,7 @@ on the network.
    ```bash
    chmod +x load_venv.sh
    ```
+
 3. If you are not running a desktop session, use the framebuffer.  Either
    export these variables yourself or rely on `load_venv.sh` which sets them
    when missing.  Also set `XDG_RUNTIME_DIR` if you see SDL errors:
@@ -33,6 +34,7 @@ on the network.
    server:
    ```bash
    sudo ./load_venv.sh
+
    ```
 
 Use a browser pointed at `http://<pi-ip>:5003` to control playback.
