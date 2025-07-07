@@ -20,7 +20,15 @@ on the network.
    ```bash
    chmod +x load_venv.sh
    ```
-3. Run the helper to create a virtual environment, install Python
+
+3. If you are not running a desktop session, point Pygame at the
+   framebuffer before launching:
+   ```bash
+   export SDL_VIDEODRIVER=fbcon
+   export SDL_FBDEV=/dev/fb0
+   ```
+4. Run the helper to create a virtual environment, install Python
+
    dependencies and start the server:
    ```bash
    ./load_venv.sh

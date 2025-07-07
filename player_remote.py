@@ -48,6 +48,13 @@ def video_player(path: str) -> str:
         print(f"Couldn't open {path}")
         return "next"
 
+
+    width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+    pygame.mouse.set_visible(False)
+
+
     fps = cap.get(cv2.CAP_PROP_FPS)
     delay = 1.0 / fps if fps > 0 else POLL
 
@@ -57,19 +64,35 @@ def video_player(path: str) -> str:
             cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
             continue
 
-        cv2.imshow("Video", frame)
-        cv2.waitKey(1)
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        surf = pygame.surfarray.make_surface(frame.swapaxes(0, 1))
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+
 
         update_clips(delay)
         cmd = fetch_cmd()
         if cmd == "quit":
             cap.release()
-            cv2.destroyAllWindows()
+
+            pygame.display.quit()
             return "quit"
         if cmd == "next":
             cap.release()
-            cv2.destroyAllWindows()
+            pygame.display.quit()
             return "next"
+
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    cap.release()
+                    pygame.display.quit()
+                    return "quit"
+                else:
+                    cap.release()
+                    pygame.display.quit()
+                    return "next"
 
         time.sleep(delay)
 
