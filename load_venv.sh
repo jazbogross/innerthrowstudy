@@ -21,7 +21,12 @@ python -m pip install -r requirements.txt
 # Use the framebuffer if no desktop session is running
 export SDL_VIDEODRIVER=${SDL_VIDEODRIVER:-fbcon}
 export SDL_FBDEV=${SDL_FBDEV:-/dev/fb0}
-export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/tmp}
+uid=$(id -u)
+runtime_default="/run/user/$uid"
+if [ ! -d "$runtime_default" ]; then
+    runtime_default="/tmp/xdg-$uid"
+fi
+export XDG_RUNTIME_DIR="${XDG_RUNTIME_DIR:-$runtime_default}"
 
 [ -d "$XDG_RUNTIME_DIR" ] || mkdir -p "$XDG_RUNTIME_DIR"
 

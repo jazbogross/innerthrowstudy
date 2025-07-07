@@ -6,7 +6,9 @@ import os
 # Ensure Pygame can use the framebuffer when no desktop session is running
 os.environ.setdefault("SDL_VIDEODRIVER", "fbcon")
 os.environ.setdefault("SDL_FBDEV", "/dev/fb0")
-os.environ.setdefault("XDG_RUNTIME_DIR", "/tmp")
+uid = str(os.getuid())
+runtime_default = f"/run/user/{uid}" if os.path.isdir(f"/run/user/{uid}") else f"/tmp/xdg-{uid}"
+os.environ.setdefault("XDG_RUNTIME_DIR", runtime_default)
 
 import time
 import requests

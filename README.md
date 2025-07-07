@@ -23,11 +23,13 @@ on the network.
 
 3. If you are not running a desktop session, use the framebuffer.  Either
    export these variables yourself or rely on `load_venv.sh` which sets them
-   when missing.  Also set `XDG_RUNTIME_DIR` if you see SDL errors:
+   when missing.  If you get SDL or audio errors about `XDG_RUNTIME_DIR`,
+   ensure it points to a user-owned directory:
    ```bash
    export SDL_VIDEODRIVER=fbcon
    export SDL_FBDEV=/dev/fb0
-   export XDG_RUNTIME_DIR=/tmp
+   export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+   [ -d "$XDG_RUNTIME_DIR" ] || export XDG_RUNTIME_DIR="/tmp/xdg-$(id -u)"
    ```
 4. Run the helper with sudo so it can access `/dev/fb0`, create a
    virtual environment, install Python dependencies and start the
