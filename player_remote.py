@@ -5,7 +5,7 @@ import os
 import time
 import requests
 import pygame
-import subprocess
+import cv2
 
 from clip_utils import start_clip, update_clips
 
@@ -43,35 +43,53 @@ def wait_for_start() -> bool:
 # ── Video & command-aware playback ─────────────────────────────────────
 
 def video_player(path: str) -> str:
-    # launch mpv for fullscreen video-only play
-    cmd = [
-        "mpv",
-        "--fullscreen",
-        "--no-osd-bar",
-        "--hwdec=auto",
-        "--no-config",
-        "--loop=inf",
-        "--no-audio",
-        path
-    ]
-    proc = subprocess.Popen(cmd)
+    cap = cv2.VideoCapture(path)
+    if not cap.isOpened():
+        print(f"Couldn't open {path}")
+        return "next"
 
-    # poll for quit/next while video plays
-    while proc.poll() is None:
-        # update layered audio
-        update_clips(POLL)
-        # check remote commands
-        c = fetch_cmd()
-        if c == "quit":
-            proc.terminate()
+    width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+    pygame.mouse.set_visible(False)
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+    delay = 1.0 / fps if fps > 0 else POLL
+
+    while True:
+        ok, frame = cap.read()
+        if not ok:
+            cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+            continue
+
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        surf = pygame.surfarray.make_surface(frame.swapaxes(0, 1))
+        screen.blit(surf, (0, 0))
+        pygame.display.flip()
+
+        update_clips(delay)
+        cmd = fetch_cmd()
+        if cmd == "quit":
+            cap.release()
+            pygame.display.quit()
             return "quit"
-        if c == "next":
-            proc.terminate()
+        if cmd == "next":
+            cap.release()
+            pygame.display.quit()
             return "next"
-        time.sleep(POLL)
 
-    # video ended normally
-    return "next"
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_q:
+                    cap.release()
+                    pygame.display.quit()
+                    return "quit"
+                else:
+                    cap.release()
+                    pygame.display.quit()
+                    return "next"
+
+        time.sleep(delay)
 
 # ── Main loop ──────────────────────────────────────────────────────────
 
