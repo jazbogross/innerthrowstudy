@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 # Remote-driven video looper that polls /command on localhost
-# pip install requests opencv-python pygame
 
-import os, time, requests, cv2, pygame, sys
+import os, time, requests, pygame, subprocess
 from clip_utils import start_clip, update_clips
 
 HD_DIR = os.path.join(os.path.dirname(__file__), "HD")
@@ -32,27 +31,19 @@ def wait_for_start():
         time.sleep(POLL)
 
 def video_player(path):
-    cap = cv2.VideoCapture(path)
-    if not cap.isOpened():
-        print("Can't open", path); return "next"
-    while True:
-        ok, frame = cap.read()
-        if not ok:
-            cap.set(cv2.CAP_PROP_POS_FRAMES, 0); continue
-        cv2.imshow("Video", frame)
-        k = cv2.waitKey(int(POLL*1000)) & 0xFF
+    cmd = [
+        "mpv",
+        "--fullscreen",
+        "--no-osd-bar",
+        "--hwdec=auto",
+        "--no-config",
+        "--no-audio",
+        path
+    ]
+    proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    proc.wait()
+    return "next"
 
-        # keyboard fallback
-        if k == ord('q'):
-            return "quit"
-        if k != 0xFF:
-            return "next"
-
-        cmd = fetch_cmd()
-        if cmd:
-            return cmd
-
-        update_clips(POLL)
 
 def main():
     clips = list_clips()
