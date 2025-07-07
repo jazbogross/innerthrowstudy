@@ -2,6 +2,12 @@
 # Remote-driven video looper that polls /command on localhost
 
 import os
+
+# Ensure Pygame can use the framebuffer when no desktop session is running
+os.environ.setdefault("SDL_VIDEODRIVER", "fbcon")
+os.environ.setdefault("SDL_FBDEV", "/dev/fb0")
+os.environ.setdefault("XDG_RUNTIME_DIR", "/tmp")
+
 import time
 import requests
 import pygame
@@ -49,10 +55,10 @@ def video_player(path: str) -> str:
         return "next"
 
 
-    width  = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    screen = pygame.display.set_mode((width, height), pygame.FULLSCREEN)
+    # use the current display resolution rather than the video size
+    screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
     pygame.mouse.set_visible(False)
+    screen_size = screen.get_size()
 
 
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -67,6 +73,8 @@ def video_player(path: str) -> str:
 
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         surf = pygame.surfarray.make_surface(frame.swapaxes(0, 1))
+        if surf.get_size() != screen_size:
+            surf = pygame.transform.smoothscale(surf, screen_size)
         screen.blit(surf, (0, 0))
         pygame.display.flip()
 

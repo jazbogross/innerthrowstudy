@@ -18,5 +18,12 @@ source .venv/bin/activate
 python -m pip install --upgrade pip   # safe to run repeatedly
 python -m pip install -r requirements.txt
 
+# Use the framebuffer if no desktop session is running
+export SDL_VIDEODRIVER=${SDL_VIDEODRIVER:-fbcon}
+export SDL_FBDEV=${SDL_FBDEV:-/dev/fb0}
+export XDG_RUNTIME_DIR=${XDG_RUNTIME_DIR:-/tmp}
+
+[ -d "$XDG_RUNTIME_DIR" ] || mkdir -p "$XDG_RUNTIME_DIR"
+
 # ── 3. exec the real application  (so systemd sees its PID) ────────
 exec python remote_server.py          # remote_server will spawn player_remote

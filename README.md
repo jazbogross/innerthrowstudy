@@ -21,17 +21,20 @@ on the network.
    chmod +x load_venv.sh
    ```
 
-3. If you are not running a desktop session, point Pygame at the
-   framebuffer before launching:
+3. If you are not running a desktop session, use the framebuffer.  Either
+   export these variables yourself or rely on `load_venv.sh` which sets them
+   when missing.  Also set `XDG_RUNTIME_DIR` if you see SDL errors:
    ```bash
    export SDL_VIDEODRIVER=fbcon
    export SDL_FBDEV=/dev/fb0
+   export XDG_RUNTIME_DIR=/tmp
    ```
-4. Run the helper to create a virtual environment, install Python
-
-   dependencies and start the server:
+4. Run the helper with sudo so it can access `/dev/fb0`, create a
+   virtual environment, install Python dependencies and start the
+   server:
    ```bash
-   ./load_venv.sh
+   sudo ./load_venv.sh
+
    ```
 
 Use a browser pointed at `http://<pi-ip>:5003` to control playback.
