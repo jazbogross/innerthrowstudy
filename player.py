@@ -16,11 +16,11 @@ def list_clips():
     """
     files = os.listdir(HD_DIR)
 
-    # collect all .mov basenames first
+    # collect all .mp4 basenames first
     video_bases = {
         os.path.splitext(f)[0]
         for f in files
-        if f.lower().endswith(".mov")
+        if f.lower().endswith(".mp4")
     }
 
     # now keep only those that have ≥1 matching wav (base or base_*)
@@ -61,7 +61,7 @@ def video_player(path):
 def main():
     clips = list_clips()
     if not clips:
-        print("No matching .mov/.wav pairs in HD/"); return
+        print("No matching .mp4/.wav pairs in HD/"); return
 
     # --- robust mixer initialisation ---------------------------
     pygame.mixer.pre_init(44100, -16, 2, 512)   # 44.1 kHz, 16-bit, stereo
@@ -79,7 +79,7 @@ def main():
         start_clip(clip, HD_DIR)
 
         # show video (runs in the MAIN thread!)
-        status = video_player(os.path.join(HD_DIR, f"{clip}.mov"))
+        status = video_player(os.path.join(HD_DIR, f"{clip}.mp4"))
         cv2.destroyAllWindows()
 
         if status == "quit":
